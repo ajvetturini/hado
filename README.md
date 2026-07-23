@@ -1,3 +1,6 @@
+[![DOI](https://zenodo.org/badge/1310097407.svg)](https://doi.org/10.5281/zenodo.21515951)
+
+
 # HADO: Hollowframe Automated DNA Origami Design 
 
 This repository contains code for the automated design of hollowframe DNA origami nanostructures. The hado codebase is split into `app` and `core` directories corresponding to the user-interface and core algorithm functionalities, respectively. 
