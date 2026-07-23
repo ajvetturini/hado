@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hado"
+version = "0.1.0"
+authors = [
+  {name="A.J. Vetturini", email="avetturi@andrew.cmu.edu"},
+]
+description = "Automated scaffold routing + nucleotide level design for hollowframe DNA origami nanostructures"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "jax>=0.5.0",
+    "dill>=0.3.9",
+    "networkx>=3.4.2",
+    "scadnano>=0.20.0",
+    "pandas>=2.2.3",
+    "st_oxview>=1.0.0",
+    "plotly>=6.0.0",
+    "scipy>=1.15.1",
+    "streamlit>=1.45.0",
+    "altair>=5.5.0",
+    "pytest>=9.0.3",
+]
+
+[tool.setuptools.packages.find]
+include = ["hado*"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"hado" = ["**/*.json", "**/*.npy", "**/*.csv"]

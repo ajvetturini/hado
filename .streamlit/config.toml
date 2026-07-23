@@ -1,0 +1,14 @@
+[global]
+disableWidgetStateDuplicationWarning = true
+
+[theme]
+primaryColor="#007bff"
+backgroundColor="#E8E1E1"
+textColor="#333333"
+font="sans serif"
+headingFont="sans serif"
+showWidgetBorder = false
+baseFontSize = 18
+
+[client]
+toolbarMode = 'minimal'

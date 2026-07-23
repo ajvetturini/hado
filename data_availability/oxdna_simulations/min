@@ -1,0 +1,23 @@
+backend = CPU
+sim_type = min
+steps = 1e3
+interaction_type = DNA2
+salt_concentration = 1.0
+max_backbone_force = 5
+max_backbone_force_far = 10
+T = 20C
+dt = 0.005
+verlet_skin = 0.15
+print_conf_interval = 100
+print_energy_every = 10
+no_stdout_energy = false
+time_scale = linear
+refresh_vel = 1
+restart_step_counter = 1
+max_io = 15.0
+
+# Replace below with your inputs
+topology = test.top
+conf_file = test.dat
+trajectory_file = min_trajectory.dat
+energy_file = min_energy.dat

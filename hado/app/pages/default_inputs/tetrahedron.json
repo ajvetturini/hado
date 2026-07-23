@@ -1,0 +1,87 @@
+{
+    "design_name": "tetrahedron",
+    "geometry": {
+        "vertices": [
+            [
+                0.0,
+                0.0,
+                23.76768825
+            ],
+            [
+                -11.204198437499997,
+                -19.40625,
+                -7.92256275
+            ],
+            [
+                -11.204198437499997,
+                19.40625,
+                -7.92256275
+            ],
+            [
+                22.408396874999994,
+                0.0,
+                -7.92256275
+            ]
+        ],
+        "edges": [
+            [
+                0,
+                2
+            ],
+            [
+                1,
+                2
+            ],
+            [
+                0,
+                1
+            ],
+            [
+                1,
+                3
+            ],
+            [
+                0,
+                3
+            ],
+            [
+                2,
+                3
+            ]
+        ],
+        "n_per_edge": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+        ]
+    },
+    "scaffold_args": {
+        "scaffold_sequence": "m13",
+        "overfill_or_underfill": "overfill",
+        "grid_style": "hollow",
+        "lattice_type": "dna_honeycomb"
+    },
+    "staple_args": {
+        "min_length_after_break": 20,
+        "max_length_after_break": 60,
+        "random_seed": 8,
+        "max_staple_spacer_length": 7,
+        "min_dist_between_xovers": 3,
+        "min_run_post_xover": 3,
+        "target_staple_length": 42,
+        "polyt_bulge_dist": 0.6,
+        "default_blunt_end_length": 5,
+        "only_add": false,
+        "min_run_post_bundle_connection": 5,
+        "target_miter_distance": 2.0,
+        "make_flush": true,
+        "flush_distance": 1,
+        "unpaired_sequence": "T"
+    },
+    "verbose": false,
+    "nucleotide_level_model": null,
+    "custom_oxview": null
+}

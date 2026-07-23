@@ -1,0 +1,5 @@
+These are the oxDNA simulation files (minimization, relaxation, simulation) i used for this work.
+
+The write_oxdna_harmonic_trap.py creates the external_forces file that can be set during the simulation if performing
+the strain simulations. Otherwise, you would leave the external_forces off and just use the min -> relax -> simulate
+pipeline
