@@ -4,12 +4,12 @@ This repository contains code for the automated design of hollowframe DNA origam
 A more thourough description of the algorithms and methods used in this codebase can be found in the following publication and its SI material:
 
 ```commandline
-Insert citation here
+todo: Insert citation here
 ```
 
 ### The Graphical User Interface (GUI)
 
-The GUI is built using [streamlit](https://streamlit.io/) and allows users to easily design and visualize hollowframe DNA origami structures [online at this webpage](https://hado-origami.streamlit.app/) without having to install anything. Overall, a user defines a list of 3D vertices in the format [(xi, yi, zi), ...] alongside an edge list in the format [(vi, vj), ...]. You also must specify the desired number of DNA helices in the bundle (which is analgous to a bundle-diameter parameter). Output files consist of standard CAD formats (caDNAno, scadnano, oxView, oxDNA) as well as the staple sequences needed for the design in a CSV format. Also, the design files that can be saved (and re-used in the GUI) are standard `json` pickle files. 
+The GUI is built using [streamlit](https://streamlit.io/) and allows users to easily design and visualize hollowframe DNA origami structures [online at this webpage](https://hado.streamlit.app/) without having to install anything. Overall, a user defines a list of 3D vertices in the format [(xi, yi, zi), ...] alongside an edge list in the format [(vi, vj), ...]. You also must specify the desired number of DNA helices in the bundle (which is analgous to a bundle-diameter parameter). Output files consist of standard CAD formats (caDNAno, scadnano, oxView, oxDNA) as well as the staple sequences needed for the design in a CSV format. Also, the design files that can be saved (and re-used in the GUI) are standard `json` files. 
 
 An API for the programmatic core functionalities is also provided with documentation and tutorials found on [readthedocs here](todo). The API enables a user (or a [generative design toolkit](https://github.com/CMU-Integrated-Design-Innovation-Group/Mango)) to provide the input vertex / edge lists to enable design automation in scripted formats. 
 
@@ -32,7 +32,7 @@ conda activate my_env
 3. Install the package / dependencies:
 
 ```bash
-pip install -e .
+pip install .
 ```
 
 ### Running the App Locally
