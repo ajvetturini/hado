@@ -38,3 +38,10 @@ include-package-data = true
 
 [tool.setuptools.package-data]
 "hado" = ["**/*.json", "**/*.npy", "**/*.csv"]
+
+[project.optional-dependencies]
+docs = [
+    "sphinx>=7.0",
+    "sphinx-rtd-theme",
+    "myst-nb",
+]

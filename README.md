@@ -1,17 +1,20 @@
+[![DOI](https://zenodo.org/badge/1310097407.svg)](https://doi.org/10.5281/zenodo.21515951)
+
+
 # HADO: Hollowframe Automated DNA Origami Design 
 
 This repository contains code for the automated design of hollowframe DNA origami nanostructures. The hado codebase is split into `app` and `core` directories corresponding to the user-interface and core algorithm functionalities, respectively. 
 A more thourough description of the algorithms and methods used in this codebase can be found in the following publication and its SI material:
 
 ```commandline
-todo: Insert citation here
+Vetturini, A. J., Cagan,  J. and Taylor, R. E. 2026. Automated design of stiffness-tunable DNA origami hollowframes for self-assembling metamaterials. doi: TODO
 ```
 
 ### The Graphical User Interface (GUI)
 
-The GUI is built using [streamlit](https://streamlit.io/) and allows users to easily design and visualize hollowframe DNA origami structures [online at this webpage](https://hado.streamlit.app/) without having to install anything. Overall, a user defines a list of 3D vertices in the format [(xi, yi, zi), ...] alongside an edge list in the format [(vi, vj), ...]. You also must specify the desired number of DNA helices in the bundle (which is analgous to a bundle-diameter parameter). Output files consist of standard CAD formats (caDNAno, scadnano, oxView, oxDNA) as well as the staple sequences needed for the design in a CSV format. Also, the design files that can be saved (and re-used in the GUI) are standard `json` files. 
+The GUI is built using [streamlit](https://streamlit.io/) and allows users to easily design and visualize hollowframe DNA origami structures [online at this webpage](https://hadogui.streamlit.app/hado) without having to install anything. Overall, a user defines a list of 3D vertices in the format [(xi, yi, zi), ...] alongside an edge list in the format [(vi, vj), ...]. You also must specify the desired number of DNA helices in the bundle (which is analgous to a bundle-diameter parameter). Output files consist of standard CAD formats (caDNAno, scadnano, oxView, oxDNA) as well as the staple sequences needed for the design in a CSV format. Also, the design files that can be saved (and re-used in the GUI) are standard `json` files. 
 
-An API for the programmatic core functionalities is also provided with documentation and tutorials found on [readthedocs here](todo). The API enables a user (or a [generative design toolkit](https://github.com/CMU-Integrated-Design-Innovation-Group/Mango)) to provide the input vertex / edge lists to enable design automation in scripted formats. 
+An API for the programmatic core functionalities is also provided with documentation and tutorials found on [readthedocs here](https://hado.readthedocs.io/en/latest/). The API enables a user (or a [generative design toolkit](https://github.com/CMU-Integrated-Design-Innovation-Group/Mango)) to provide the input vertex / edge lists to enable design automation in scripted formats. 
 
 ### Local Installation
 

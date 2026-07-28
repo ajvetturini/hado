@@ -17,7 +17,7 @@ if __name__ == '__main__':
                 f"built using [streamlit](https://streamlit.io/)", unsafe_allow_html=True)
 
     st.markdown(f" - **GitHub**: [{PROJECT_NAME}](https://github.com/ajvetturini/hado/)")
-    st.markdown(" - **Documentation & Python API**: [Read the Docs]()")
+    st.markdown(" - **Documentation & Python API**: [Read the Docs](https://hado.readthedocs.io/en/latest/)")
     st.markdown(" - **FAQs**: [Common questions](./FAQs)")
     st.markdown(" - **Our Research Groups / Contact Information**: "
                 "[Microsystems and MechanoBiology Lab](https://www.andrew.cmu.edu/user/bex/pages/welcome/) "
