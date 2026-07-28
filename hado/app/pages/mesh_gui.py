@@ -424,7 +424,6 @@ def _render_preview_panel(form_values, display_dict, input_disabled: bool, valid
 
 def _handle_update(form_values):
     st.session_state["reset_scale"] = True
-
     try:
         vertices = _normalize_vertices(form_values["vertices_df"].values.tolist())
         edges = _normalize_edges(form_values["edges_df"].values.tolist())
@@ -445,7 +444,6 @@ def _handle_update(form_values):
         form_values["edge_thickness_nm"],
     )
     is_valid, error_msgs = _validate(vertices, edges, form_values["scaffold_seq"], form_values["name"])
-
     st.session_state["geometry"] = geometry_state
     st.session_state["run_verified"] = False
 
@@ -458,7 +456,7 @@ def _handle_update(form_values):
             st.session_state["validated_manager"] = None
             st.session_state["error_msgs"] = [str(exc)]
     else:
-        st.session_state["validated_manager"] = None
+        #st.session_state["validated_manager"] = None
         st.session_state["error_msgs"] = error_msgs
 
     st.rerun()

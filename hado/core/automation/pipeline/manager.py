@@ -366,7 +366,7 @@ class HadoManager:
         return cls.load(filepath)
 
     @classmethod
-    def load_ui(cls, filepath: Path | str = None, data: dict = None) -> tuple['HadoManager', HadoNucleotideModel, dict]:
+    def load_ui(cls, filepath: Path | str = None, data: dict = None) -> tuple['HadoManager', HadoNucleotideModel]:
         if filepath is not None and data is not None:
             raise ValueError("ERROR: Can only load from one of filepath or data")
 
@@ -398,9 +398,8 @@ class HadoManager:
             nucleotide_level_model = None
         manager = cls(design_name, geo, scaf, stap, verbose=verbose)
         manager.set_nucleotide_model(nucleotide_level_model)
-        autostaple_explorer = data['autostaple_explorer'] if 'autostaple_explorer' in data else {}
 
-        return manager, nucleotide_level_model, autostaple_explorer
+        return manager, nucleotide_level_model
 
     def set_new_scaffold_sequence(self, sequence: str):
         """ Overwrite the scaffold sequence (e.g., to write a sequences file with a different scaffold) """

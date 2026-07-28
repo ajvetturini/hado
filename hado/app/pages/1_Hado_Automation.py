@@ -95,7 +95,6 @@ def _activate_designer_state(
     basename: str,
     validated_manager: dict | None = None,
     run_verified: bool = False,
-    autostaple_explorer: dict | None = None,
     edge_width_mode: str | None = None,
 ):
     if edge_width_mode is None:
@@ -116,11 +115,6 @@ def _activate_designer_state(
     st.session_state["n_per_edge_input"] = int(
         _first_width_value(geometry, "n_per_edge", DEFAULT_N_PER_EDGE)
     )
-
-    if autostaple_explorer:
-        st.session_state["autostaple_explorer"] = autostaple_explorer
-    else:
-        st.session_state.pop("autostaple_explorer", None)
 
 
 @st.cache_data
@@ -148,13 +142,12 @@ def _handle_file_upload(mesh_file) -> bool:
             tmp_path = Path(tmp_file.name)
 
         if suffix in {".json", ".hado"}:
-            manager, nucleotide_model, autostaple_explorer = HadoManager.load_ui(tmp_path)
+            manager, nucleotide_model = HadoManager.load_ui(tmp_path)
             _activate_designer_state(
                 geometry=manager.geometry.to_dict(),
                 basename=basename,
                 validated_manager=manager.to_json(),
                 run_verified=nucleotide_model is not None,
-                autostaple_explorer=autostaple_explorer or None,
             )
             return True
 
@@ -172,6 +165,7 @@ def _handle_file_upload(mesh_file) -> bool:
             basename=basename,
             edge_width_mode="thickness",
             validated_manager=manager.to_json(),
+            run_verified=False,
         )
         st.session_state["n_per_edge_input"] = default_n_per_edge
         return True
