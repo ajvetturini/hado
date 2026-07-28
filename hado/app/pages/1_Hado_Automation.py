@@ -162,6 +162,7 @@ def _handle_file_upload(mesh_file) -> bool:
         is_closed_surface = _check_verts_n_edges(geometry.vertices, geometry.edges)
         default_edge_thickness = DEFAULT_EDGE_THICKNESS_NM if is_closed_surface else DEFAULT_OPEN_EDGE_THICKNESS_NM
         default_n_per_edge = DEFAULT_N_PER_EDGE if is_closed_surface else DEFAULT_OPEN_N_PER_EDGE
+        manager = HadoManager(basename, geometry)
         _activate_designer_state(
             geometry={
                 "vertices": geometry.vertices,
@@ -170,6 +171,7 @@ def _handle_file_upload(mesh_file) -> bool:
             },
             basename=basename,
             edge_width_mode="thickness",
+            validated_manager=manager.to_json(),
         )
         st.session_state["n_per_edge_input"] = default_n_per_edge
         return True
