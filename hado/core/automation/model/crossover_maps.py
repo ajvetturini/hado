@@ -58,29 +58,23 @@ def define_xover_maps(model, state: dict | None = None, num_edges: int | None = 
 
 
 def get_nearest_scaffold_crossover_index(model, helix_from, helix_to, idx):
-    """Find the nearest valid scaffold crossover index."""
+    """Find the nearest direction-correct scaffold crossover index."""
     xover_ft = model._scaffold_xover_map[(int(helix_from), int(helix_to))]
-    valid_indices = np.where(xover_ft != -1)[0]
-    scaffold_dir = model._scaffold_dirs[helix_from]
+    valid_indices = get_all_scaffold_crossover_options(model, helix_from, helix_to)
+    if len(valid_indices) == 0:
+        raise RuntimeError("ERROR: No valid scaffold crossover positions found.")
 
     diffs = np.abs(valid_indices - idx)
-    min_diff_idx = np.argmin(diffs)
-    correct_nt_from_to = int(valid_indices[min_diff_idx])
-
-    if valid_indices[(min_diff_idx + 1) % len(valid_indices)] - correct_nt_from_to == 1:
-        correct_nt_to_from = int(correct_nt_from_to + 1)
-    else:
-        correct_nt_to_from = int(correct_nt_from_to - 1)
-
-    if scaffold_dir:
-        return min(correct_nt_from_to, correct_nt_to_from)
-    return max(correct_nt_from_to, correct_nt_to_from)
+    cyclic_diffs = np.minimum(diffs, len(xover_ft) - diffs)
+    return int(valid_indices[np.argmin(cyclic_diffs)])
 
 
 def get_all_scaffold_crossover_options(model, helix_from, helix_to):
     """Return all valid scaffold crossover positions between two helices."""
     xover_ft = np.array(model._scaffold_xover_map[(int(helix_from), int(helix_to))])
     valid_indices = np.where(xover_ft != -1)[0]
+    if len(valid_indices) and valid_indices[0] == 0:
+        valid_indices = np.roll(valid_indices, -1)
     if model._scaffold_dirs[helix_from]:
         return valid_indices[::2]
     return valid_indices[1::2]

@@ -90,7 +90,8 @@ def _verify_internal_bundle_xovers(xovers, nts, global_to_local, local_to_global
         raise RuntimeError(
             f"ERROR: Unable to place required internal staple crossover(s) on edge {edge_between} after mitering. "
             f"Unresolved helix pair(s): {'; '.join(pair_details)}. All individual helices passed the "
-            f"{minimum_length}-nt post-mitering minimum. No lattice-compatible crossover remains in the shared "
+            f"{minimum_length}-nt post-mitering minimum. The limiting condition is pairwise overlap, not individual helix length. "
+            f"No lattice-compatible crossover remains in the shared "
             f"active span after applying StapleArgs spacing constraints. Try lengthening the edge, reducing "
             f"the cross-section size, target_miter_distance, or relaxing StapleArgs spacing constraints."
         )

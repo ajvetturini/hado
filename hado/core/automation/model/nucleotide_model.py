@@ -372,24 +372,24 @@ class HadoNucleotideModel:
         return self._bundle_rotations
 
     def get_ordered_scaffold_nts(self):
-        nts = self.get_scaffold_nucleotides()
+        if np.asarray(self._scaffold_start_point).size != 2:
+            nts = self.get_scaffold_nucleotides()
 
-        # Just placing scaffold break point on helix 0 by default
-        scaffold_xovers, staple_xovers = self.get_internal_crossovers_on_helix(0)
-        potential_options = np.where(nts[0])[0]
+            # Place the scaffold break point on helix 0 by default.
+            scaffold_xovers, _ = self.get_internal_crossovers_on_helix(0)
+            potential_options = np.where(nts[0])[0]
 
-        for xo in scaffold_xovers:
-            helix, position = xo
-            min_dist = self.staple_args.min_dist_between_xovers
-            start = position - min_dist
-            end = position + min_dist
+            for xo in scaffold_xovers:
+                _, position = xo
+                min_dist = self.staple_args.min_dist_between_xovers
+                start = position - min_dist
+                end = position + min_dist
 
-            to_remove = np.arange(start, end)
-            potential_options = potential_options[~np.isin(potential_options, to_remove)]
+                to_remove = np.arange(start, end)
+                potential_options = potential_options[~np.isin(potential_options, to_remove)]
 
-        # Select middle-most value nowo f the potential_options
-        selected_nt = potential_options[int(len(potential_options) // 2)]
-        self.set_scaffold_start_point([0, selected_nt])
+            selected_nt = potential_options[int(len(potential_options) // 2)]
+            self.set_scaffold_start_point([0, selected_nt])
         return _get_ordered_scaffold_nts(self)
 
     def get_ordered_staple_nts(self):
