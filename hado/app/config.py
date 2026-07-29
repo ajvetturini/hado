@@ -50,7 +50,7 @@ def get_custom_css():
         }} 
 
         div.stButton button {{
-            background-color: #b3b3b3;
+            background-color: #ab7ce0;
             color: white;
             border: none;
             border-radius: 16px;
@@ -62,7 +62,7 @@ def get_custom_css():
         }}
 
         div.stDownloadButton button {{
-            background-color: #b3b3b3;
+            background-color: #ab7ce0;
             color: white;
             border: none;
             border-radius: 16px;
@@ -74,13 +74,13 @@ def get_custom_css():
         }}
 
         div.stButton button:hover {{
-            background-color: #8c8c8c;
+            background-color: rgba(107,191,216,0.733);
             color: white;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }}
 
         div.stDownloadButton button:hover {{
-            background-color: #8c8c8c;
+            background-color: rgba(107,191,216,0.733);
             color: white;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }}

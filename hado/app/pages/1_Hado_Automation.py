@@ -163,7 +163,7 @@ def _handle_file_upload(mesh_file) -> bool:
                 "edge_thickness_nm": [default_edge_thickness] * len(geometry.edges),
             },
             basename=basename,
-            edge_width_mode="thickness",
+            edge_width_mode="helices",
             validated_manager=manager.to_json(),
             run_verified=False,
         )

@@ -33,7 +33,7 @@ EDGE_WIDTH_MODE_LABELS = {
     "thickness": "Edge thickness (nm)",
     "helices": "N helices",
 }
-EMPTY_GEOMETRY_STATE = {"vertices": [], "edges": [], "edge_thickness_nm": [DEFAULT_EDGE_THICKNESS_NM]}
+EMPTY_GEOMETRY_STATE = {"vertices": [], "edges": [], "edge_thickness_nm": []}
 
 
 def render_mesh_designer():
