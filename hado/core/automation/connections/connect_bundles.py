@@ -800,6 +800,78 @@ def _eval_hungarian(cost_matrix, all_ids):
     matched_distances = cost_matrix[row_ind, col_ind]
     return matched_bundle_pairs, matched_distances
 
+
+def _count_repeated_bundle_pairs(pairs, helix_to_bundle):
+    pair_counts = defaultdict(int)
+    for sender, receiver in pairs:
+        bundle_pair = tuple(sorted((
+            int(helix_to_bundle[sender]),
+            int(helix_to_bundle[receiver]),
+        )))
+        pair_counts[bundle_pair] += 1
+    return sum(max(0, count - 1) for count in pair_counts.values())
+
+
+def _improve_2hb_bundle_diversity(
+        pairs,
+        cost_matrix,
+        all_ids,
+        helix_to_bundle,
+        diversity_penalty,
+):
+    """Locally discourage both helices of a 2HB from selecting the same neighboring bundle."""
+    sender_ids, receiver_ids = all_ids
+    sender_rows = {int(sender): row for row, sender in enumerate(sender_ids)}
+    receiver_cols = {int(receiver): col for col, receiver in enumerate(receiver_ids)}
+
+    def _assignment_costs(candidate_pairs):
+        return np.array([
+            cost_matrix[sender_rows[int(sender)], receiver_cols[int(receiver)]]
+            for sender, receiver in candidate_pairs
+        ])
+
+    current_pairs = [tuple(pair) for pair in pairs]
+    current_costs = _assignment_costs(current_pairs)
+    current_score = (
+        np.sum(current_costs)
+        + diversity_penalty * _count_repeated_bundle_pairs(current_pairs, helix_to_bundle)
+    )
+
+    while True:
+        best_pairs = None
+        best_costs = None
+        best_score = current_score
+
+        for first in range(len(current_pairs)):
+            for second in range(first + 1, len(current_pairs)):
+                candidate_pairs = list(current_pairs)
+                sender1, receiver1 = candidate_pairs[first]
+                sender2, receiver2 = candidate_pairs[second]
+                candidate_pairs[first] = (sender1, receiver2)
+                candidate_pairs[second] = (sender2, receiver1)
+
+                candidate_costs = _assignment_costs(candidate_pairs)
+                if np.any(candidate_costs >= _FORBIDDEN_CONNECTION_COST):
+                    continue
+
+                candidate_score = (
+                    np.sum(candidate_costs)
+                    + diversity_penalty
+                    * _count_repeated_bundle_pairs(candidate_pairs, helix_to_bundle)
+                )
+                if candidate_score < best_score:
+                    best_pairs = candidate_pairs
+                    best_costs = candidate_costs
+                    best_score = candidate_score
+
+        if best_pairs is None:
+            return current_pairs, current_costs
+
+        current_pairs = best_pairs
+        current_costs = best_costs
+        current_score = best_score
+
+
 def _solve_via_hungarian(positions, design, constrained_connections=None, **kwargs):
     def _num_connections(_pairs):
         graph = nx.Graph()
@@ -833,6 +905,29 @@ def _solve_via_hungarian(positions, design, constrained_connections=None, **kwar
     pairs, distances = _eval_hungarian(cost_matrix, global_indices)
     if np.any(distances >= _FORBIDDEN_CONNECTION_COST):
         raise RuntimeError("ERROR: Unable to find a valid cross-bundle assignment.")
+
+    diversity_penalty = kwargs.get('two_helix_bundle_diversity_penalty')
+    if diversity_penalty is None:
+        spacing = design.get_spacing_distance() if hasattr(design, 'get_spacing_distance') else 1.0
+        diversity_penalty = 2 * spacing
+    if diversity_penalty < 0:
+        raise ValueError('ERROR: two_helix_bundle_diversity_penalty can not be negative.')
+
+    n_per_edge = np.asarray(design.geometry.n_per_edge).reshape(-1)
+    if len(n_per_edge) == 1:
+        is_two_helix_vertex = n_per_edge[0] == 2
+    else:
+        is_two_helix_vertex = all(n_per_edge[int(bundle)] == 2 for bundle in positions)
+
+    if is_two_helix_vertex and diversity_penalty > 0:
+        pairs, distances = _improve_2hb_bundle_diversity(
+            pairs,
+            cost_matrix,
+            global_indices,
+            h2b,
+            diversity_penalty,
+        )
+
     components, all_connections, bundles = _num_connections(pairs)
 
     min_hungarian_threshold = kwargs.get('min_hungarian_threshold', 0.2)
