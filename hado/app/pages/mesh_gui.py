@@ -434,7 +434,10 @@ def _handle_update(form_values):
         st.rerun()
 
     if form_values["scale"] != 1.0:
-        vertices = (form_values["scale"] * np.asarray(vertices, dtype=float)).tolist()
+        verts = np.array(vertices, dtype=float)
+        centroid = np.mean(verts, axis=0)
+        new_vertices = (verts - centroid) * form_values["scale"] + centroid
+        vertices = new_vertices.tolist()
 
     geometry_state = _geometry_state_from_inputs(
         vertices,

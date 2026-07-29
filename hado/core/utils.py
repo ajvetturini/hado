@@ -449,6 +449,15 @@ class Geometry:
             actual_thickness.append(selected_thickness)
         return n_per_edge, actual_thickness
 
+    def scale(self, scale: float):
+        """ Simple scaling of vertices in the design """
+        assert scale > 0, "ERROR: Scale must be larger than 0"
+        verts = np.array(self.vertices, dtype=float)
+        centroid = np.mean(verts, axis=0)
+        new_vertices = (verts - centroid) * scale + centroid
+        self.vertices = new_vertices.tolist()
+        self.edge_lengths_nm = self._validate_input()
+
     def set_n_per_edge(self, n_per_edge: int | list) -> None:
         """Update helix counts and re-run geometry validation."""
         self.edge_thickness_nm = None

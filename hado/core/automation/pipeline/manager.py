@@ -522,6 +522,12 @@ class HadoManager:
             verbose=self.verbose,
         )
 
+    def scale_geometry(self, scale: float):
+        """ Scales the geometry maintained by the manager (and re-calculates the edge lengths) """
+        assert scale > 0, 'ERROR: Scaling must be larger than 0'
+        self.geometry.scale(scale)
+        self.nucleotide_level_model = None  # Reset (just in case)
+
     def _set_scadnano(self, nucleotide_model: HadoNucleotideModel):
         if nucleotide_model.scadnano_not_set():
             nucleotide_model.set_scadnano(
