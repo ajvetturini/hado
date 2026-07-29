@@ -9,6 +9,10 @@ from typing import Tuple
 from hado.core.automation.model.nucleotide_model import HadoNucleotideModel
 from hado.core.automation.diagnostics.visualization import build_bundle_positions_figure
 
+_REPAIR_COMPONENT_PENALTY = 1e6
+_FORBIDDEN_CONNECTION_COST = 1e12
+
+
 def optimize_connections(design: HadoNucleotideModel,
                          **kwargs
                          ) -> Tuple[dict, dict, list]:
@@ -48,7 +52,9 @@ def optimize_connections(design: HadoNucleotideModel,
     # There is a loop here because in high connectivity, low-N-per-edge configurations
     # then we need to carefully atreat the connectivity to ensure continuous scaffold
     while iteration < max_check:
-        optimal_connections, flat_optimal_conditions = get_optimal_connections(design, best_state, all_flats)
+        optimal_connections, flat_optimal_conditions = get_optimal_connections(
+            design, best_state, all_flats, **kwargs
+        )
 
         if kwargs.get('connections_only', False):
             return optimal_connections, best_state, []
@@ -64,7 +70,12 @@ def optimize_connections(design: HadoNucleotideModel,
     design.set_bundle_rotations(best_state)
     return optimal_connections, best_state, scaffold_helix_connections
 
-def get_optimal_connections(design: HadoNucleotideModel, best_state, constrained_connections: set = None):
+def get_optimal_connections(
+        design: HadoNucleotideModel,
+        best_state,
+        constrained_connections: set = None,
+        **kwargs,
+):
     """ Uses the Hungarian matching algorithm to find optimal set of rotations between helix bundles """
     base_positions_and_axes = decompose_design_into_bundles(design)
     rotated_positions = get_rotated_positions(design, base_positions_and_axes, best_state)
@@ -89,7 +100,9 @@ def get_optimal_connections(design: HadoNucleotideModel, best_state, constrained
             positions[int(b)] = (bundle_points[local_senders], bundle_points[local_receivers],
                                  global_senders, global_receivers)
 
-        connected_edges, _ = _solve_via_hungarian(positions, design, constrained_connections)
+        connected_edges, _ = _solve_via_hungarian(
+            positions, design, constrained_connections, **kwargs
+        )
         staple_map_nearest_helices[int(v)] = connected_edges
 
     connections_per_vertex = [list(v) for v in staple_map_nearest_helices.values()]
@@ -172,7 +185,7 @@ def find_best_initial_state(design: HadoNucleotideModel, **kwargs):
                 positions[int(b)] = (bundle_points[local_senders], bundle_points[local_receivers],
                                      global_senders, global_receivers)
 
-            connected_edges, distances_found = _solve_via_hungarian(positions, design)
+            connected_edges, distances_found = _solve_via_hungarian(positions, design, **kwargs)
             distance_score += np.sum(distances_found)
             constraint_score += _score_constraints(submaps, connected_edges)
 
@@ -767,12 +780,12 @@ def _get_hungarian_cost(positions, design: HadoNucleotideModel, constrained_conn
             b1, b2 = sender_bundle_ids[i], receiver_bundle_ids[j]
             mapping[(b1, b2)] = (i, j)
             if helix_to_bundle[b1] == helix_to_bundle[b2]:
-                cost_matrix[i, j] = 1e6  # large cost to block same-bundle connections
+                cost_matrix[i, j] = _FORBIDDEN_CONNECTION_COST
 
             if constrained_connections is not None:
                 for c in constrained_connections:
                     if (b1, b2) in c or (b2, b1) in c:
-                        cost_matrix[i, j] = 1e6
+                        cost_matrix[i, j] = _FORBIDDEN_CONNECTION_COST
 
     return cost_matrix, (sender_bundle_ids, receiver_bundle_ids), mapping
 
@@ -818,6 +831,8 @@ def _solve_via_hungarian(positions, design, constrained_connections=None, **kwar
     h2b = design.get_helix_to_bundle()
     cost_matrix, global_indices, cost_map = _get_hungarian_cost(positions, design, constrained_connections)
     pairs, distances = _eval_hungarian(cost_matrix, global_indices)
+    if np.any(distances >= _FORBIDDEN_CONNECTION_COST):
+        raise RuntimeError("ERROR: Unable to find a valid cross-bundle assignment.")
     components, all_connections, bundles = _num_connections(pairs)
 
     min_hungarian_threshold = kwargs.get('min_hungarian_threshold', 0.2)
@@ -871,13 +886,15 @@ def _solve_via_hungarian(positions, design, constrained_connections=None, **kwar
             for b in comp_set:
                 comp_map[b] = comp_idx
 
-        # Block connections that resolve to same component
+        # Prefer connections that bridge separate components
         for i, ls in enumerate(bridge_s):
             for j, lr in enumerate(bridge_r):
                 if comp_map.get(h2b[ls]) == comp_map.get(h2b[lr]):
-                    bridge_cost[i, j] = 1e6
+                    bridge_cost[i, j] = max(bridge_cost[i, j], _REPAIR_COMPONENT_PENALTY)
 
         bridge_pairs, bridge_distances = _eval_hungarian(bridge_cost, bridge_global)
+        if np.any(bridge_distances >= _FORBIDDEN_CONNECTION_COST):
+            break
 
         next_pairs = [p for p in pairs if tuple(p) not in swap_pairs and (p[1], p[0]) not in swap_pairs]
         next_pairs.extend(bridge_pairs)
