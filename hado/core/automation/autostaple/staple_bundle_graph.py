@@ -114,12 +114,16 @@ def _staple_helix_bundle(only_add, hb_idx, grid_positions, staple_nts, staple_di
     # designs if the recommended default StapleArgs are used due to the design paradigms of hollowframes.
     if not only_add:
         _recombine_crossovers_using_staple_args(graph, local_ids, staple_args)
-        bundle_xovers = _convert_graph_to_xovers_list(graph, staple_dirs, local_to_global)
+        bundle_xovers = _convert_graph_to_xovers_list(
+            graph, staple_dirs, local_to_global, design.get_period()
+        )
         start_break = None
     else:
         start_break = _get_start_position(potential_staple_xovers, scaffold_xovers, staple_args)
         start_break = (local_to_global[start_break[0]], start_break[1])
-        bundle_xovers = _convert_graph_to_xovers_list(graph, staple_dirs, local_to_global)
+        bundle_xovers = _convert_graph_to_xovers_list(
+            graph, staple_dirs, local_to_global, design.get_period()
+        )
 
     bundle_xovers = _verify_internal_bundle_xovers(bundle_xovers, staple_nts, global_to_local, local_to_global, nn,
                                                    hb_idx, scaffold_xovers, staple_xover_positions, design)
@@ -137,11 +141,33 @@ def _staple_helix_bundle(only_add, hb_idx, grid_positions, staple_nts, staple_di
 
     graph = new_graph
     if not only_add:
-        _apply_verified_staple_xovers_to_graph(graph, bundle_xovers)
+        _apply_verified_staple_xovers_to_graph(graph, bundle_xovers, design.get_period())
     return bundle_xovers, start_break, graph
 
 
-def _apply_verified_staple_xovers_to_graph(graph, xovers):
+def _pair_consecutive_crossover_positions(positions, period=None):
+    """Pair adjacent crossover sites, including the cyclic period boundary."""
+    ordered = sorted(positions)
+    if period is not None and len(ordered) >= 2:
+        if ordered[0] % period == 0 and ordered[-1] % period == period - 1:
+            ordered = [ordered[-1], *ordered[:-1]]
+
+    if len(ordered) % 2 != 0:
+        raise RuntimeError("ERROR: Expected paired staple crossover positions.")
+
+    pairs = list(zip(ordered[0::2], ordered[1::2]))
+    for nt1, nt2 in pairs:
+        consecutive = abs(nt2 - nt1) == 1
+        wraps_period = (
+            period is not None
+            and {nt1 % period, nt2 % period} == {0, period - 1}
+        )
+        if not consecutive and not wraps_period:
+            raise RuntimeError("ERROR: Expected consecutive nucleotides staple crossover.")
+    return pairs
+
+
+def _apply_verified_staple_xovers_to_graph(graph, xovers, period=None):
     """Keep the autobreak graph in sync with recovered staple crossovers."""
     crossover_positions = {}
     for h1, nt, h2, maybe_nt in xovers:
@@ -151,14 +177,7 @@ def _apply_verified_staple_xovers_to_graph(graph, xovers):
         crossover_positions.setdefault(key, set()).add(int(nt))
 
     for (h1, h2), positions in crossover_positions.items():
-        sorted_positions = sorted(positions)
-        if len(sorted_positions) % 2 != 0:
-            raise RuntimeError('ERROR: Expected paired staple crossover positions.')
-
-        for nt1, nt2 in zip(sorted_positions[0::2], sorted_positions[1::2]):
-            if abs(nt2 - nt1) != 1:
-                raise RuntimeError('ERROR: Expected consecutive nucleotides staple crossover.')
-
+        for nt1, nt2 in _pair_consecutive_crossover_positions(positions, period):
             edge1 = ((h1, nt1), (h1, nt2))
             edge2 = ((h2, nt1), (h2, nt2))
             if graph.has_edge(*edge1):
@@ -218,7 +237,7 @@ def _get_start_position(potential_staple_xovers, scaffold_xovers, staple_args):
         raise RuntimeError('ERROR: Unable to find start point')
     return start_point
 
-def _convert_graph_to_xovers_list(graph, staple_dirs, local_to_global):
+def _convert_graph_to_xovers_list(graph, staple_dirs, local_to_global, period=None):
     """Converts the graph representation of staple crossovers into a list of crossover tuples."""
     crossover_positions = {}
     for u, v in graph.edges:
@@ -227,29 +246,22 @@ def _convert_graph_to_xovers_list(graph, staple_dirs, local_to_global):
         if helix_i == helix_j:
             continue
         if nt_i != nt_j:
-            raise RuntimeError('ERROR: Expected staple crossover nucleotides to share an index.')
+            raise RuntimeError("ERROR: Expected staple crossover nucleotides to share an index.")
 
         key = tuple(sorted((helix_i, helix_j)))
         crossover_positions.setdefault(key, set()).add(int(nt_i))
 
     cleaned_xovers = []
     for (helix_i, helix_j), positions in sorted(crossover_positions.items()):
-        sorted_positions = sorted(positions)
-        if len(sorted_positions) % 2 != 0:
-            raise RuntimeError('ERROR: Expected paired staple crossover positions.')
-
         if staple_dirs[helix_i] == staple_dirs[helix_j]:
-            raise RuntimeError('ERROR: Staple crossovers should connect anti-parallel helices.')
+            raise RuntimeError("ERROR: Staple crossovers should connect anti-parallel helices.")
 
         if staple_dirs[helix_i]:
             forward_helix, reverse_helix = helix_i, helix_j
         else:
             forward_helix, reverse_helix = helix_j, helix_i
 
-        for nt1, nt2 in zip(sorted_positions[0::2], sorted_positions[1::2]):
-            if abs(nt2 - nt1) != 1:
-                raise RuntimeError('ERROR: Expected consecutive nucleotides staple crossover.')
-
+        for nt1, nt2 in _pair_consecutive_crossover_positions(positions, period):
             cleaned_xovers.append([local_to_global[forward_helix], nt1, local_to_global[reverse_helix], -1])
             cleaned_xovers.append([local_to_global[reverse_helix], nt2, local_to_global[forward_helix], -1])
 

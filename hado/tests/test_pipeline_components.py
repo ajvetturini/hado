@@ -1,5 +1,6 @@
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 import warnings
 
 import matplotlib.pyplot as plt
@@ -8,12 +9,14 @@ import numpy as np
 
 from hado.core.automation.autostaple import autostaple_hollowframe, simple_autobreak
 from hado.core.automation.autostaple.breakpoint_labels import _label_nodes_for_breaks
+from hado.core.automation.autostaple.crossover_conflicts import _verify_internal_bundle_xovers
 from hado.core.automation.autostaple.staple_bundle_graph import (
     _apply_verified_staple_xovers_to_graph,
     _convert_graph_to_xovers_list,
 )
 from hado.core.automation.connections.connect_bundles import (
     _solve_via_hungarian,
+    optimize_connections,
     find_best_initial_state,
     get_rotated_positions,
     decompose_design_into_bundles,
@@ -205,7 +208,7 @@ class PipelineRefactorTests(unittest.TestCase):
         self.assertEqual(lattice.grid_type, "honeycomb")
         self.assertEqual(lattice.period, 21)
         self.assertAlmostEqual(lattice.axial_rise, 0.34)
-        self.assertAlmostEqual(lattice.helix_spacing, 2.375)
+        self.assertAlmostEqual(lattice.helix_spacing, 3.25)
 
     def test_pipeline_config_preserves_unknown_kwargs(self):
         config = PipelineConfig.from_kwargs({
@@ -290,9 +293,9 @@ class PipelineRefactorTests(unittest.TestCase):
             edge_thickness_nm=11.7,
         )
 
-        self.assertEqual(geometry.n_per_edge, [8, 8, 8])
+        self.assertEqual(geometry.n_per_edge, [4, 4, 4])
         self.assertEqual(geometry.edge_thickness_nm, [11.7, 11.7, 11.7])
-        self.assertAlmostEqual(geometry.edge_thickness_actual_nm[0], 11.625)
+        self.assertAlmostEqual(geometry.edge_thickness_actual_nm[0], 10.848691760960108)
         self.assertEqual(geometry.to_dict()["edge_thickness_nm"], [11.7, 11.7, 11.7])
 
         reloaded = Geometry(**geometry.to_dict())
@@ -316,8 +319,8 @@ class PipelineRefactorTests(unittest.TestCase):
             helix_diameter=lattice.diameter,
         )
 
-        self.assertEqual(selection["n_per_edge"], 16)
-        self.assertAlmostEqual(selection["actual_diameter"], 14.692318727627262, places=6)
+        self.assertEqual(selection["n_per_edge"], 10)
+        self.assertAlmostEqual(selection["actual_diameter"], 15.25, places=6)
 
     def test_mixed_odd_scaffold_routing_raises_not_implemented(self):
         geometry = Geometry(
@@ -328,6 +331,105 @@ class PipelineRefactorTests(unittest.TestCase):
 
         with self.assertRaises(NotImplementedError):
             perform_scaffold_routing(geometry, ScaffoldArgs())
+
+    def test_unresolved_staple_crossover_reports_pairwise_overlap(self):
+        class DiagnosticDesign:
+            geometry = type("Geometry", (), {"edges": [(5, 11)]})()
+            scaffold_args = type("ScaffoldArgs", (), {"min_edge_length_in_bp": 38})()
+            staple_args = StapleArgs(min_run_post_xover=2)
+            get_scaffold_crossovers = staticmethod(
+                lambda: np.empty((0, 4), dtype=np.int64)
+            )
+
+        nts = np.zeros((2, 220), dtype=np.bool_)
+        nts[0, 40:131] = True
+        nts[1, 103:178] = True
+        local_to_global = {0: 79, 1: 82}
+        global_to_local = {79: 0, 82: 1}
+
+        with self.assertRaises(RuntimeError) as raised:
+            _verify_internal_bundle_xovers(
+                np.empty((0, 4), dtype=np.int64),
+                nts,
+                global_to_local,
+                local_to_global,
+                {(0, 1), (1, 0)},
+                0,
+                [],
+                np.full((2, 220), -3, dtype=np.int64),
+                DiagnosticDesign(),
+            )
+
+        message = str(raised.exception)
+        self.assertIn("79 (91 nt, active 40-130) <-> 82 (75 nt, active 103-177)", message)
+        self.assertIn("shared overlap 28 nt (103-130)", message)
+        self.assertIn("passed the 38-nt post-mitering minimum", message)
+        self.assertIn("pairwise overlap, not individual helix length", message)
+
+    def test_hungarian_repair_never_uses_same_bundle_match(self):
+        class FiveBundleDesign:
+            class Geometry:
+                n_per_edge = [2]
+
+            geometry = Geometry()
+
+            @staticmethod
+            def get_helix_to_bundle():
+                return np.array([0, 1, 2, 3, 4, 0, 1, 2, 3, 4])
+
+        sender_positions = np.array([
+            [4.5340434792, 50.7267000597, 34.1077387082],
+            [-25.1105952639, 49.4540936438, 20.2088101234],
+            [-9.5718205588, 19.0168380706, 32.3696808423],
+            [6.1771611969, 33.9878368219, 62.3784092572],
+            [-7.7335721267, 17.5571194303, 36.1209787178],
+        ])
+        receiver_positions = np.array([
+            [2.5797982789, 51.1399487430, 31.5440204665],
+            [-27.2993275730, 47.0533919215, 20.1161703927],
+            [-7.3604387523, 21.1344091446, 31.2796426540],
+            [7.2407434764, 36.9543417242, 61.5839651750],
+            [-5.8513611287, 17.2888395911, 38.7568481544],
+        ])
+        positions = {
+            bundle: (
+                sender_positions[bundle:bundle + 1],
+                receiver_positions[bundle:bundle + 1],
+                np.array([bundle]),
+                np.array([bundle + 5]),
+            )
+            for bundle in range(5)
+        }
+
+        pairs, _ = _solve_via_hungarian(positions, FiveBundleDesign())
+        helix_to_bundle = FiveBundleDesign.get_helix_to_bundle()
+
+        self.assertTrue(all(helix_to_bundle[sender] != helix_to_bundle[receiver]
+                            for sender, receiver in pairs))
+
+    def test_connection_options_reach_hungarian_solver(self):
+        manager = self._triangle_manager()
+        routing = perform_scaffold_routing(manager.geometry, manager.scaffold_args)
+        design = initialize_base_design(
+            manager.geometry, manager.scaffold_args, manager.staple_args, routing
+        )
+
+        with patch(
+                "hado.core.automation.connections.connect_bundles._solve_via_hungarian",
+                wraps=_solve_via_hungarian,
+        ) as solve:
+            optimize_connections(
+                design,
+                connections_only=True,
+                max_rotation_iterations=0,
+                min_hungarian_threshold=0.4,
+                max_hungarian_retries=3,
+            )
+
+        self.assertGreater(solve.call_count, 0)
+        for call in solve.call_args_list:
+            self.assertEqual(call.kwargs["min_hungarian_threshold"], 0.4)
+            self.assertEqual(call.kwargs["max_hungarian_retries"], 3)
 
     def test_connection_optimizer_rejects_invalid_hungarian_threshold(self):
         manager = self._triangle_manager()

@@ -74,7 +74,7 @@ def test_pipeline_config_can_disable_export_preparation():
 
 
 def test_hado_manager_switches_plus_sign_to_square_lattice():
-    manager, _ = HadoManager.load_default('plus_sign')
+    manager = HadoManager.load_default('plus_sign')
 
     manager.set_lattice_type("dna_square")
 
@@ -83,7 +83,7 @@ def test_hado_manager_switches_plus_sign_to_square_lattice():
 
 
 def test_hado_manager_runs_square_plus_sign_pipeline_without_exports():
-    manager, _ = HadoManager.load_default('plus_sign')
+    manager = HadoManager.load_default('plus_sign')
     manager.set_lattice_type("dna_square")
 
     diagnostics = manager.run(

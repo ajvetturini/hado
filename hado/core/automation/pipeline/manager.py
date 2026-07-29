@@ -355,12 +355,13 @@ class HadoManager:
         Example usage: manager = HadoManager.load_default('tetrapod')
         """
         from hado.app.utils import DEFAULT_OPEN_MESHES, DEFAULT_SURFACE_MESHES
-        clean_open = {k.lower(): v for k, v in DEFAULT_OPEN_MESHES.items()}
-        clean_surface = {k.lower(): v for k, v in DEFAULT_SURFACE_MESHES.items()}
-        if design_name.lower() in clean_open:
-            filepath = clean_open[design_name]
-        elif design_name.lower() in clean_surface:
-            filepath = clean_surface[design_name]
+        normalized_name = design_name.casefold().replace(" ", "_")
+        clean_open = {k.casefold().replace(" ", "_"): v for k, v in DEFAULT_OPEN_MESHES.items()}
+        clean_surface = {k.casefold().replace(" ", "_"): v for k, v in DEFAULT_SURFACE_MESHES.items()}
+        if normalized_name in clean_open:
+            filepath = clean_open[normalized_name]
+        elif normalized_name in clean_surface:
+            filepath = clean_surface[normalized_name]
         else:
             raise ValueError(f'ERROR: The specified design_name {design_name} was not found in the default directory.')
         return cls.load(filepath)
