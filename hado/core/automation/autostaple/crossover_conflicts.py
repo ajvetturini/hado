@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import math
-
 import numpy as np
 
 from hado.core.automation.model.nucleotide_model import HadoNucleotideModel
@@ -72,33 +70,30 @@ def _verify_internal_bundle_xovers(xovers, nts, global_to_local, local_to_global
         if made_progress:
             continue
 
-        scaffold_nts = design.get_scaffold_nucleotides()
-        temp = set()
-        min_sum = math.inf
-        global_helix_min_nts = None
+        pair_details = []
+        for a, j in sorted(compressed):
+            global_a, global_j = int(local_to_global[a]), int(local_to_global[j])
+            active_a, active_j = np.where(nts[a])[0], np.where(nts[j])[0]
+            overlap_start = max(int(active_a[0]), int(active_j[0]))
+            overlap_end = min(int(active_a[-1]), int(active_j[-1]))
+            overlap_length = max(0, overlap_end - overlap_start + 1)
+            overlap_range = f"{overlap_start}-{overlap_end}" if overlap_length else "none"
+            pair_details.append(
+                f"{global_a} ({len(active_a)} nt, active {active_a[0]}-{active_a[-1]}) <-> "
+                f"{global_j} ({len(active_j)} nt, active {active_j[0]}-{active_j[-1]}), "
+                f"shared overlap {overlap_length} nt ({overlap_range})"
+            )
 
-        for i in unresolved_neighbors:
-            a, j = min(i), max(i)
-            global_pair = (local_to_global[a], local_to_global[j])
-
-            if global_pair not in temp:
-                temp.add(global_pair)
-                sum_a = np.sum(nts[a])
-                sum_j = np.sum(nts[j])
-
-                if sum_a < min_sum:
-                    min_sum = sum_a
-                    global_helix_min_nts = local_to_global[a]
-                if sum_j < min_sum:
-                    min_sum = sum_j
-                    global_helix_min_nts = local_to_global[j]
-
-        num_scaf_nts_post_mitering = np.sum(scaffold_nts[global_helix_min_nts])
         edge_between = tuple(design.geometry.edges[cur_edge])
-        raise Exception(f'ERROR: Helix {global_helix_min_nts} on edge (vi, vj) = {edge_between} is too short '
-                        f'post-mitering ({num_scaf_nts_post_mitering} nts) and will lead to un-winding. Try '
-                        f'lengthening that edge, reducing the mitering threshold, or reducing the values of the'
-                        f'various min `StapleArgs` values (these should be between 3 and 5).')
+        minimum_length = design.scaffold_args.min_edge_length_in_bp
+        staple_args = design.staple_args
+        raise RuntimeError(
+            f"ERROR: Unable to place required internal staple crossover(s) on edge {edge_between} after mitering. "
+            f"Unresolved helix pair(s): {'; '.join(pair_details)}. All individual helices passed the "
+            f"{minimum_length}-nt post-mitering minimum. No lattice-compatible crossover remains in the shared "
+            f"active span after applying StapleArgs spacing constraints. Try lengthening the edge, reducing "
+            f"the cross-section size, target_miter_distance, or relaxing StapleArgs spacing constraints."
+        )
 
 
 def _try_add_recovered_staple_xover(helix_pair, current_staple_xovers, crossover_positions, design: HadoNucleotideModel,
