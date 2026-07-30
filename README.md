@@ -7,7 +7,7 @@ This repository contains code for the automated design of hollowframe DNA origam
 A more thourough description of the algorithms and methods used in this codebase can be found in the following publication and its SI material:
 
 ```commandline
-Vetturini, A. J., Cagan,  J. and Taylor, R. E. 2026. Automated design of stiffness-tunable DNA origami hollowframes for self-assembling metamaterials. doi: TODO
+Vetturini, A. J, Cagan, J., and Taylor R. E. “Automated Design of Stiffness-Tunable DNA Origami Hollowframes for Self-Assembling Metamaterials.” Preprint, bioRxiv, July 24, 2026. https://doi.org/10.64898/2026.07.23.740378.
 ```
 
 ### The Graphical User Interface (GUI)

@@ -33,8 +33,8 @@ def _render_upload_section():
     with st.container():
         mesh_file = st.file_uploader(
             "Upload Mesh File (.ply, .obj, .lm, or .hado save states)",
-            type=["ply", "obj", "lm", "json", "hado"],
-            help="Please upload a valid .ply, obj, .lm, or hado (json)",
+            type=["ply", "obj", "lm", "hado"],
+            help="Please upload a valid .ply, obj, .lm, or hado",
         )
 
         cc1, cc2 = st.columns(2)
@@ -141,7 +141,7 @@ def _handle_file_upload(mesh_file) -> bool:
             tmp_file.write(mesh_file.getvalue())
             tmp_path = Path(tmp_file.name)
 
-        if suffix in {".json", ".hado"}:
+        if suffix in {".hado"}:
             manager, nucleotide_model = HadoManager.load_ui(tmp_path)
             _activate_designer_state(
                 geometry=manager.geometry.to_dict(),
@@ -151,6 +151,7 @@ def _handle_file_upload(mesh_file) -> bool:
             )
             return True
 
+        # If suffix is not hado it is just a base geometry file (ply / obj / lm)
         geometry = Geometry.read_in_mesh(tmp_path)
         is_closed_surface = _check_verts_n_edges(geometry.vertices, geometry.edges)
         default_edge_thickness = DEFAULT_EDGE_THICKNESS_NM if is_closed_surface else DEFAULT_OPEN_EDGE_THICKNESS_NM
@@ -171,8 +172,8 @@ def _handle_file_upload(mesh_file) -> bool:
         return True
 
     except Exception as e:
-        if suffix in {".json", ".hado"}:
-            st.error(f"ERROR: Invalid JSON file data due to {e}")
+        if suffix in {".hado"}:
+            st.error(f"ERROR: Invalid *.hado file data due to {e}")
         else:
             st.error(f"ERROR: Invalid mesh input data (ply, obj, or lm) due to {e}")
         return False

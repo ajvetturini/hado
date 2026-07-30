@@ -577,6 +577,7 @@ def _render_nucleotide_model_section(manager: HadoManager, model, validated_stat
                     "starting from scratch."
                 ),
             ):
+                manager.set_nucleotide_model(None)
                 st.session_state["validated_manager"] = manager.to_json()
                 st.session_state["run_verified"] = False
                 st.session_state["nucleotide_level_model"] = None

@@ -8,16 +8,17 @@ if __name__ == '__main__':
 
     with st.expander(expanded=False, label='Basic Questions',):
         st.markdown("**Q: How do I cite this tool?**")
-        st.code("todo", language="text")
+        st.markdown('The article is currently undergoing peer-review but has been deposited into bioRxiv:')
+        st.code('Vetturini, Anthony Joseph, Jonathan Cagan, and Rebecca E. Taylor. “Automated Design of Preprint, '
+                'bioRxiv, July 24, 2026. https://doi.org/10.64898/2026.07.23.740378.', language="text")
 
         st.markdown("**Q: How do I access the Python API?**")
-        st.write("**A**: There are installation instructions along with an example Jupyter notebook found in the "
-                 "readthedocs here (todo: Add link) ")
+        st.markdown("**A**: There are installation instructions along with an example Jupyter notebook found in the "
+                    "readthedocs [here](https://hado.readthedocs.io/en/latest/) ")
 
         st.markdown("**Q: What buffer conditions should I use for hollowframe DNA origami?**")
-        st.write("**A**: The 18HB structures shown in the journal article (arrow and tetrapod) are in 1X TAE, 12 mM "
-                 "MgCl$_2$, and use a 10X staple to scaffold ratio with 20 nM of scaffold. The 30HB structure shown is "
-                 "in 1X TAE, 16 mM MgCl$_2$ and uses a 10X ratio with 10 nM of scaffold. The TAE used here is pH ~8.3")
+        st.write("**A**: The structures shown in the journal article are in 1X TAE (~8.3 pH), 12 mM MgCl$_2$, and use "
+                 "100 nM of a staple mix (calibrated to 1000 nM) with 10 nM of scaffold.")
 
         st.markdown("**Q: What annealing ramp should I use for individual monomers?**")
         st.markdown("""
@@ -59,6 +60,33 @@ if __name__ == '__main__':
         #
         # If I am missing your work and you want it listed, please let me know and I'll happily add it.
         # """)
+
+    with st.expander(expanded=False, label='Design Error Questions'):
+        st.markdown("**Q: What geometries cause issues with this tool?**")
+        st.markdown("""
+        **A**: Thus far, I have found that these types of topological features may lead to issues:
+        
+        - Geometries with sharp angles (~<15-20 deg) between edges when using low-numbers of N per helix bundle. 
+        - Geometries with sharp angles and short edges, sharp angles typically requires much longer edges
+        - Large geometries. The algorithms here are scaled to traditional DNA origami sized-structures (~10K nts), and some (such as the autostapling) do not scale well to ultra-large structures (~50K+ nts). 
+        - Very complex geometries (~40+ edges). These types of geometries could (currently) only be manufactured realistically using 1 or 2 helices per edge, thus other tools (vHelix, DAEDALUS) are more well-suited.
+        """)
+
+        st.markdown("**Q: Why does this take a while to run?**")
+        st.markdown("""
+        **A**: Presuming you structure is appropriately sized, the streamlit community cloud only provides so much 
+        computational resources, so my first recommendation would be to try and run the app locally. If issues still 
+        persist, please open a [GitHub issue](https://github.com/ajvetturini/hado/issues/new) with the *.hado file 
+        attached to further investigate what issues might be popping up.
+        """)
+
+        st.markdown("**Q: How do I report an issue?**")
+        st.markdown("""
+                **A**: Please open a [GitHub issue](https://github.com/ajvetturini/hado/issues/new) and attach the 
+                *.hado file so I can investigate. I am an academic (i.e., not a web app dev), so there will be rough 
+                edges here (but rough edges can be fixed with feedback!). 
+                """)
+
 
     # Demo videos (as a note-to-self, currently all videos are on the 19... youtube account)
     with st.expander(expanded=False, label="30-second demo of app functionalities"):
